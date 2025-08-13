@@ -1,78 +1,186 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Form Pemesanan</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
-
-  <div class="container mt-5">
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Form Order</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+  </head>
+  <style>
+#results { max-height:300px; overflow-y:auto; border:1px solid #ddd; }
+.result-item { padding:8px; cursor:pointer; border-bottom:1px solid #eee; }
+.result-item:hover { background:#f8f9fa; }
+</style>
+  <body>
+  <div class="container my-5">
     <div class="row justify-content-center">
       <div class="col-md-6">
         <div class="card shadow-lg">
-          <div class="card-header bg-primary text-white text-center">
-            <h4>Form Input Data</h4>
+          <div class="card-header bg-primary text-white text-center py-3">
+            <h2 class="text-uppercase">Form Input Data</h2>
           </div>
-          <div class="card-body">
-            <form id="orderForm">
-              <div class="mb-3">
-                <label for="nama" class="form-label">Nama Pembeli</label>
-                <input type="text" class="form-control text-uppercase" id="nama" name="nama" required>
-              </div>
-              <div class="mb-3">
-                <label for="wa" class="form-label">Nomor WhatsApp</label>
-                <input type="tel" class="form-control text-uppercase" id="wa" name="wa" required>
-              </div>
-              <div class="mb-3">
-                <label for="alamat" class="form-label">Alamat</label>
-                <textarea class="form-control text-uppercase" id="alamat" name="alamat" rows="3" required></textarea>
-              </div>
-              <div class="mb-3">
-                <label for="barang" class="form-label">Nama Barang</label>
-                <input type="text" class="form-control text-uppercase" id="barang" name="barang" required>
-              </div>
-              <div class="mb-3">
-                <label for="quantity" class="form-label">Quantity</label>
-                <input type="number" class="form-control text-uppercase" id="quantity" name="quantity" required min="1">
-              </div>
-              <div class="d-grid">
-                <button type="submit" class="btn btn-success">Kirim</button>
-              </div>
-            </form>
-            <div id="alert" class="alert mt-3 d-none" role="alert"></div>
-          </div>
+            <div class="container py-3">
+
+
+  <form id="orderForm">
+  <div class="mb-3 px-3">
+    <div class="mb-3">
+    <label class="form-label">Pilihan Paket</label>
+    <select name="paket" class="form-select" required>
+      <option value="" disabled selected>-- Pilih Paket Obat --</option>
+      <option>1 Botol Xerdiove Nakara</option>
+      <option>2 Botol Xerdiove Nakara</option>
+      <option>3 Botol Xerdiove Nakara</option>
+      <option>4 Botol Xerdiove Nakara</option>
+      <option>5 Botol Xerdiove Nakara</option>
+      <option>6 Botol Xerdiove Nakara</option>
+    </select>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Nama</label>
+    <input type="text" name="nama" class="form-control" placeholder="Ketik nama lengkap..." required>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Nomor WhatsApp</label>
+    <input type="number" name="wa" class="form-control" placeholder="Ketik nomor whatsapp..." minlength="10" required>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Alamat</label>
+    <input type="text" id="alamatutama" name="alamatutama" class="form-control" placeholder="Ketik nama kecamatan...">
+    <div id="results"></div>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Detail Alamat</label>
+    <textarea name="alamat" class="form-control" placeholder="Ketik Jl / No.Rumah / Patokan agar paket cepat sampai..." required></textarea>
+  </div>
+
+  <div class="mb-4">
+    <label class="form-label">Metode Pembayaran</label>
+    <div class="form-check mt-1">
+      <input class="form-check-input" type="radio" name="metodePembayaran" id="cod" value="COD" required>
+      <label class="form-check-label" for="cod">
+        COD / Bayar di Tempat
+      </label>
+    </div>
+    <hr class="my-2">
+    <div class="form-check">
+      <input class="form-check-input" type="radio" name="metodePembayaran" id="transfer" value="Transfer" required>
+      <label class="form-check-label" for="transfer">
+        Transfer (Ongkos lebih murah)
+      </label>
+    </div>
+  </div>
+
+  <div class="text-center">
+    <button type="submit" class="btn btn-primary" style=" padding-inline: 65px;padding-block: 10px;">Pesan Sekarang</button>
+  </div>
+  
+</form>
+
+<div id="statusMsg" class="mt-3"></div>
+
+   </div>
+
+  <p id="status"></p>
         </div>
       </div>
     </div>
   </div>
 
+<script>
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzGuxuqEVW3QLnaK0IEqTgF3tepHyaY9OqlQv1nl7ijAmNOREeV9HrMB6upIPWLeHiA/exec";
+let timeout;
+
+document.getElementById('alamatutama').addEventListener('input', function() {
+  const keyword = this.value.trim();
+  const resultsDiv = document.getElementById('results');
+  clearTimeout(timeout);
+
+  if (keyword.length < 3) {
+    resultsDiv.innerHTML = "<div class='p-2 text-muted'>Ketik minimal 3 huruf...</div>";
+    return;
+  }
+
+  resultsDiv.innerHTML = "<div class='p-2 text-primary'>Mencari...</div>";
+
+  timeout = setTimeout(async () => {
+    try {
+      const res = await fetch(`${GAS_WEB_APP_URL}?keyword=${encodeURIComponent(keyword)}`);
+      const data = await res.json();
+
+      const resultsArray = Array.isArray(data.result) ? data.result : [];
+
+      if (resultsArray.length === 0) {
+        resultsDiv.innerHTML = "<div class='p-2 text-danger'>Tidak ada hasil ditemukan</div>";
+        return;
+      }
+
+      resultsDiv.innerHTML = resultsArray.slice(0,50).map(item => `
+        <div class="result-item" 
+             data-kel="${item.desakel}" 
+             data-kec="${item.kecamatan}" 
+             data-kab="${item.kabkota}" 
+             data-prov="${item.provinsi}">
+          <strong>${item.desakel}</strong><br>
+          <small>${item.kecamatan}, ${item.kabkota}, ${item.provinsi}</small>
+        </div>
+      `).join('');
+
+      document.querySelectorAll('.result-item').forEach(el => {
+        el.addEventListener('click', () => {
+          // Format satu baris: kelurahan, kecamatan, kabupaten, provinsi
+          const fullAddress = `${el.dataset.kel}, ${el.dataset.kec}, ${el.dataset.kab}, ${el.dataset.prov}`;
+          document.getElementById('alamatutama').value = fullAddress;
+
+          resultsDiv.innerHTML = ""; // hilangkan hasil pencarian
+        });
+      });
+
+    } catch(err) {
+      resultsDiv.innerHTML = "<div class='p-2 text-danger'>Gagal mengambil data</div>";
+      console.error(err);
+    }
+  }, 400); // debounce 400ms
+});
+</script>
+
   <script>
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbzVsoly_ogNtebfn1A5CqPy1XVG69TEqg_PUQk6Rb8oV7daLEsbtzEftD-mVfhj19cnQw/exec';
     const form = document.getElementById('orderForm');
-    const alertBox = document.getElementById('alert');
+    const status = document.getElementById('status');
 
-    form.addEventListener('submit', function(e) {
+    form.addEventListener('submit', e => {
       e.preventDefault();
-      const scriptURL = 'https://script.google.com/macros/s/AKfycbwopBfgACOOlqQEEe36FjHyPlF541BT_KTlphzvhbDAPTJrhBlOhKWUvJ9lJaUHnneYtw/exec'; // Ganti dengan URL Web App dari Apps Script
+      status.textContent = "Mengirim...";
 
-      const formData = new FormData(form);
-
-      fetch(scriptURL, { method: 'POST', body: formData })
+      fetch(scriptURL, { method: 'POST', body: new FormData(form) })
         .then(response => {
-          alertBox.className = 'alert alert-success mt-3';
-          alertBox.innerText = 'Data berhasil dikirim!';
-          alertBox.classList.remove('d-none');
-          form.reset();
+          status.textContent = "Data berhasil dikirim!";
+                
+      // Ambil data user dari form
+const nama = form.nama.value || '';
+const paketobat = form.paket.value || '';
+      
+      // Reset form
+      form.reset();
+
+      // 1. Kirim ke WhatsApp penjual
+      const waPenjual = '6285185044075'; // format +62 tanpa 0
+      const pesan = `Halo Dok, Saya sudah melakukan pemesanan *${paketobat}* atas nama *${nama}* Mohon segera di proses ya. Terima kasih`;
+      const waLink = `https://wa.me/${waPenjual}?text=${encodeURIComponent(pesan)}`;
+
+      // Buka WA di tab baru
+      window.open(waLink, '_blank');
         })
         .catch(error => {
-          alertBox.className = 'alert alert-danger mt-3';
-          alertBox.innerText = 'Terjadi kesalahan saat mengirim data.';
-          alertBox.classList.remove('d-none');
+          status.textContent = "Gagal mengirim data.";
           console.error('Error!', error.message);
         });
     });
   </script>
-
-</body>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script>
+  </body>
 </html>
