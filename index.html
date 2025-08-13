@@ -12,7 +12,7 @@
 .result-item:hover { background:#f8f9fa; }
 </style>
   <body>
-  <div class="container my-5">
+  <div class="container mt-3 mb-5">
     <div class="row justify-content-center">
       <div class="col-md-6">
         <div class="card shadow-lg">
@@ -23,7 +23,7 @@
 
 
   <form id="orderForm">
-  <div class="mb-3 px-3">
+  <div class="mb-3 px-2">
     <div class="mb-3">
     <label class="form-label">Pilihan Paket</label>
     <select name="paket" class="form-select" required>
@@ -75,7 +75,7 @@
   </div>
 
   <div class="text-center">
-    <button type="submit" class="btn btn-primary" style=" padding-inline: 65px;padding-block: 10px;">Pesan Sekarang</button>
+    <button type="submit" class="btn btn-primary" style=" padding-inline: 65px;padding-block: 10px;">Kirim Data</button>
   </div>
   
 </form>
@@ -104,7 +104,7 @@ document.getElementById('alamatutama').addEventListener('input', function() {
     return;
   }
 
-  resultsDiv.innerHTML = "<div class='p-2 text-primary'>Mencari...</div>";
+  resultsDiv.innerHTML = "<div class='p-2 text-primary'>Sedang mencari...</div>";
 
   timeout = setTimeout(async () => {
     try {
@@ -158,22 +158,9 @@ document.getElementById('alamatutama').addEventListener('input', function() {
 
       fetch(scriptURL, { method: 'POST', body: new FormData(form) })
         .then(response => {
-          status.textContent = "Data berhasil dikirim!";
-                
-      // Ambil data user dari form
-const nama = form.nama.value || '';
-const paketobat = form.paket.value || '';
-      
+          status.textContent = "Data berhasil dikirim!";      
       // Reset form
       form.reset();
-
-      // 1. Kirim ke WhatsApp penjual
-      const waPenjual = '6285185044075'; // format +62 tanpa 0
-      const pesan = `Halo Dok, Saya sudah melakukan pemesanan *${paketobat}* atas nama *${nama}* Mohon segera di proses ya. Terima kasih`;
-      const waLink = `https://wa.me/${waPenjual}?text=${encodeURIComponent(pesan)}`;
-
-      // Buka WA di tab baru
-      window.open(waLink, '_blank');
         })
         .catch(error => {
           status.textContent = "Gagal mengirim data.";
