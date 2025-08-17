@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Show Data</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+.card-custom {
+  position: relative;
+  margin-bottom: 20px;
+  border-radius: 15px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+}
+.timestamp {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 0.75rem;
+  color: grey;
+  font-style: italic;
+}
+.nama-wa {
+  font-weight: bold;
+  margin: 5px 0;
+  font-size: 0.95rem;
+}
+.alamat{
+  margin: 5px 0;
+  font-size: 0.95rem;
+}
+.barang{
+  font-style: italic;
+  font-size: 0.95rem;
+}
+.pagination {
+  justify-content: center;
+  margin-top: 20px;
+}
+</style>
+</head>
+<body>
+<div class="container my-4">
+  <div class="text-center mb-4">
+    <h3 class="fw-bold text-success">Show Data Customer</h3>
+    <h5 class="fw-bold">Nakara Samsa Pharma</h5>
+  </div>
+
+  <div class="mb-3">
+    <input type="text" id="searchInput" class="form-control" placeholder="Cari nama atau WA...">
+  </div>
+
+  <div id="cardsContainer" class="row"></div>
+  <nav>
+    <ul id="pagination" class="pagination"></ul>
+  </nav>
+</div>
+
+<script>
+const cardsContainer = document.getElementById('cardsContainer');
+const searchInput = document.getElementById('searchInput');
+const pagination = document.getElementById('pagination');
+
+// URL Web App GAS kamu
+const apiURL = "https://script.google.com/macros/s/AKfycby6Dfdm2oHx27qIbvDhAsTfskQV7ADq3SSDCZ8gv8v4PymN-aOtXrSrkhg3njFN4fmxzg/exec";
+
+let allData = [];
+let filteredData = [];
+let currentPage = 1;
+const itemsPerPage = 6;
+
+// Fungsi format timestamp
+function formatTimestamp(ts) {
+  if (!ts) return '';
+  const date = new Date(ts);
+  const options = { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' };
+  return date.toLocaleString('id-ID', options);
+}
+
+// Ambil data dari GAS
+fetch(apiURL)
+  .then(res => res.json())
+  .then(data => {
+    // Pastikan semua field string & timestamp diformat
+    allData = data.map(item => ({
+      timestamp: formatTimestamp(item.timestamp),
+      nama: String(item.nama || '').trim(),
+      wa: String(item.wa || '').trim(),
+      alamat: String(item.alamat || '').trim(),
+      detailalamat: String(item.detailalamat || '').trim(),
+      barang: String(item.barang || '').trim(),
+      pembayaran: String(item.pembayaran || '').trim()
+    }));
+    filteredData = allData;
+    renderPage(currentPage);
+    setupPagination();
+  })
+  .catch(err => cardsContainer.innerHTML = '<p class="text-center text-danger">Gagal memuat data</p>');
+
+function renderPage(page) {
+  cardsContainer.innerHTML = '';
+  const start = (page-1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  const pageData = filteredData.slice(start, end);
+
+  if(pageData.length === 0){
+    cardsContainer.innerHTML = '<p class="text-center text-muted">Data tidak ditemukan</p>';
+    return;
+  }
+
+  pageData.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'col-md-6';
+    card.innerHTML = `
+      <div class="card-custom">
+        <div class="timestamp">${item.timestamp}</div>
+        <div class="nama-wa">${item.nama} - ${item.wa}</div>
+        <div class="alamat">${item.alamat} <br> ${item.detailalamat}</div>
+        <div class="barang">${item.barang} | ${item.pembayaran}</div>
+      </div>
+    `;
+    cardsContainer.appendChild(card);
+  });
+}
+
+function setupPagination() {
+  pagination.innerHTML = '';
+  const pageCount = Math.ceil(filteredData.length / itemsPerPage);
+
+  for(let i=1; i<=pageCount; i++){
+    const li = document.createElement('li');
+    li.className = 'page-item' + (i === currentPage ? ' active' : '');
+    li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+    li.addEventListener('click', (e) => {
+      e.preventDefault();
+      currentPage = i;
+      renderPage(currentPage);
+      setupPagination();
+      window.scrollTo(0,0);
+    });
+    pagination.appendChild(li);
+  }
+}
+
+// Pencarian case-insensitive & aman
+searchInput.addEventListener('input', () => {
+  const query = searchInput.value.toLowerCase().trim();
+  filteredData = allData.filter(item =>
+    (item.nama && item.nama.toLowerCase().includes(query)) ||
+    (item.wa && item.wa.includes(query))
+  );
+  currentPage = 1;
+  renderPage(currentPage);
+  setupPagination();
+});
+</script>
+</body>
+</html>
