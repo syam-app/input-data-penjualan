@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Form Order</title>
+    <title>Form Input Data</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
   </head>
   <style>
@@ -12,18 +12,14 @@
 .result-item:hover { background:#f8f9fa; }
 </style>
   <body>
-  <div class="container mt-3 mb-5">
-    <div class="row justify-content-center">
-      <div class="col-md-6">
-        <div class="card shadow-lg">
-          <div class="card-header bg-primary text-white text-center py-3">
-            <h2 class="text-uppercase">Form Input Data</h2>
-          </div>
-            <div class="container py-3">
-
+  <div class="container-fluid">
+    <div class="text-center my-4">
+      <h3 class="fw-bold text-center text-success">Form Input Data</h3>
+      <h5 class="text-center fw-bold">Nakara Samsa Pharma</h5><hr>      
+    </div>
 
   <form id="orderForm">
-  <div class="mb-3 px-2">
+  <div class="mb-3 px-3">
     <div class="mb-3">
     <label class="form-label">Pilihan Paket</label>
     <select name="paket" class="form-select" required>
@@ -75,7 +71,7 @@
   </div>
 
   <div class="text-center">
-    <button type="submit" class="btn btn-primary" style=" padding-inline: 65px;padding-block: 10px;">Kirim Data</button>
+    <button type="submit" class="btn btn-primary" style=" padding-inline: 65px;padding-block: 10px;">Pesan Sekarang</button>
   </div>
   
 </form>
@@ -85,17 +81,27 @@
    </div>
 
   <p id="status"></p>
-        </div>
-      </div>
-    </div>
-  </div>
 
 <script>
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzGuxuqEVW3QLnaK0IEqTgF3tepHyaY9OqlQv1nl7ijAmNOREeV9HrMB6upIPWLeHiA/exec";
+const DATA_URL = "https://raw.githubusercontent.com/syam-app/jejelan/refs/heads/main/wilayah-id.json";
+let wilayahData = [];
 let timeout;
 
-document.getElementById('alamatutama').addEventListener('input', function() {
-  const keyword = this.value.trim();
+// Load data kecamatan dari GitHub JSON saat pertama input
+async function loadWilayahData() {
+  if (wilayahData.length === 0) {
+    try {
+      const res = await fetch(DATA_URL);
+      wilayahData = await res.json();
+      console.log("Data wilayah berhasil dimuat:", wilayahData.length);
+    } catch(err) {
+      console.error("Gagal membaca DATA_KEC dari file", err);
+    }
+  }
+}
+
+document.getElementById('alamatutama').addEventListener('input', async function() {
+  const keyword = this.value.trim().toLowerCase();
   const resultsDiv = document.getElementById('results');
   clearTimeout(timeout);
 
@@ -104,47 +110,38 @@ document.getElementById('alamatutama').addEventListener('input', function() {
     return;
   }
 
-  resultsDiv.innerHTML = "<div class='p-2 text-primary'>Sedang mencari...</div>";
+  resultsDiv.innerHTML = "<div class='p-2 text-primary'>Mencari...</div>";
 
   timeout = setTimeout(async () => {
-    try {
-      const res = await fetch(`${GAS_WEB_APP_URL}?keyword=${encodeURIComponent(keyword)}`);
-      const data = await res.json();
+    await loadWilayahData();
 
-      const resultsArray = Array.isArray(data.result) ? data.result : [];
-
-      if (resultsArray.length === 0) {
-        resultsDiv.innerHTML = "<div class='p-2 text-danger'>Tidak ada hasil ditemukan</div>";
-        return;
-      }
-
-      resultsDiv.innerHTML = resultsArray.slice(0,50).map(item => `
-        <div class="result-item" 
-             data-kel="${item.desakel}" 
-             data-kec="${item.kecamatan}" 
-             data-kab="${item.kabkota}" 
-             data-prov="${item.provinsi}">
-          <strong>${item.desakel}</strong><br>
-          <small>${item.kecamatan}, ${item.kabkota}, ${item.provinsi}</small>
-        </div>
-      `).join('');
-
-      document.querySelectorAll('.result-item').forEach(el => {
-        el.addEventListener('click', () => {
-          // Format satu baris: kelurahan, kecamatan, kabupaten, provinsi
-          const fullAddress = `${el.dataset.kel}, ${el.dataset.kec}, ${el.dataset.kab}, ${el.dataset.prov}`;
-          document.getElementById('alamatutama').value = fullAddress;
-
-          resultsDiv.innerHTML = ""; // hilangkan hasil pencarian
-        });
-      });
-
-    } catch(err) {
-      resultsDiv.innerHTML = "<div class='p-2 text-danger'>Gagal mengambil data</div>";
-      console.error(err);
+    const resultsArray = wilayahData.filter(item => item.kecamatan.toLowerCase().includes(keyword));
+    
+    if (resultsArray.length === 0) {
+      resultsDiv.innerHTML = "<div class='p-2 text-danger'>Tidak ada hasil ditemukan</div>";
+      return;
     }
+
+    resultsDiv.innerHTML = resultsArray.slice(0,50).map(item => `
+      <div class="result-item" 
+           data-kec="${item.kecamatan}" 
+           data-kab="${item.kabupaten}" 
+           data-prov="${item.provinsi}">
+        <small>${item.kecamatan}, ${item.kabupaten}, ${item.provinsi}</small>
+      </div>
+    `).join('');
+
+    document.querySelectorAll('.result-item').forEach(el => {
+      el.addEventListener('click', () => {
+        const fullAddress = `${el.dataset.kec}, ${el.dataset.kab}, ${el.dataset.prov}`;
+        document.getElementById('alamatutama').value = fullAddress;
+        resultsDiv.innerHTML = "";
+      });
+    });
+
   }, 400); // debounce 400ms
 });
+
 </script>
 
   <script>
@@ -158,9 +155,22 @@ document.getElementById('alamatutama').addEventListener('input', function() {
 
       fetch(scriptURL, { method: 'POST', body: new FormData(form) })
         .then(response => {
-          status.textContent = "Data berhasil dikirim!";      
+          status.textContent = "Data berhasil dikirim!";
+                
+      // Ambil data user dari form
+const nama = form.nama.value || '';
+const paketobat = form.paket.value || '';
+      
       // Reset form
       form.reset();
+
+      // 1. Kirim ke WhatsApp penjual
+     // const waPenjual = '6285185044075'; // format +62 tanpa 0
+     // const pesan = `Halo Dok, Saya sudah melakukan pemesanan *${paketobat}* atas nama *${nama}* Mohon segera di proses ya. Terima kasih`;
+    //  const waLink = `https://wa.me/${waPenjual}?text=${encodeURIComponent(pesan)}`;
+
+      // Buka WA di tab baru
+     // window.open(waLink, '_blank');
         })
         .catch(error => {
           status.textContent = "Gagal mengirim data.";
